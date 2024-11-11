@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
-import axiosApi from "./axiosApi";
+import axiosApi from "../../axiosApi";
 
 interface Task {
   id: string;
@@ -22,9 +22,10 @@ const initialState: TodoState = {
 };
 
 export const fetchTask = createAsyncThunk("todo/fetchTask", async () => {
-  const { data } = await axiosApi<Task[]>("todo.json");
+  const { data } = await axiosApi.get<Task[]>("todo.json");
   return data;
 });
+
 export const addTask = createAsyncThunk(
   "todo/addTask",
   async (title: string) => {
@@ -32,7 +33,7 @@ export const addTask = createAsyncThunk(
       title,
       completed: false,
     });
-    return data;
+    return { ...data, title, completed: false };
   }
 );
 
@@ -43,9 +44,15 @@ export const todoSlice = createSlice({
     addTaskInput: (state, action: PayloadAction<string>) => {
       state.taskForm = action.payload;
     },
-    getNewTask: (state, action: PayloadAction<Task>) => {
-      state.tasks.push(action.payload);
+    checkOutDone: (state, action: PayloadAction<{ id: string, completed: boolean }>) => {
+      const task = state.tasks.find((task) => task.id === action.payload.id);
+      if (task) {
+        task.completed = action.payload.completed;
+      }
     },
+    deleteTask: (state, action: PayloadAction<string>) => {
+      state.tasks = state.tasks.filter((task) => task.id !== action.payload);
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -55,17 +62,23 @@ export const todoSlice = createSlice({
       })
       .addCase(fetchTask.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.tasks = action.payload;
+        state.tasks = action.payload || [];
       })
       .addCase(fetchTask.rejected, (state) => {
         state.isLoading = false;
         state.error = true;
       })
       .addCase(addTask.fulfilled, (state, action) => {
-        state.tasks.push(action.payload);
+        if (action.payload) {
+          state.tasks.push(action.payload);
+        }
         state.taskForm = "";
+      })
+      .addCase(addTask.rejected, (state) => {
+        state.isLoading = false;
+        state.error = true;
       });
   },
 });
-export const { addTaskInput } = todoSlice.actions;
+export const { addTaskInput, checkOutDone, deleteTask } = todoSlice.actions;
 export default todoSlice.reducer;

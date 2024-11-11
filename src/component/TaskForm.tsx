@@ -1,9 +1,9 @@
 import { useDispatch, useSelector } from "react-redux";
-import { addTaskInput } from "../task.slice";
-import { RootState } from "../app/store"
+import { addTaskInput, addTask } from "../container/TaskList/task.slice";
+import { RootState, AppDispatch } from "../app/store";
 
 const TaskForm = () => {
-  const dispatch = useDispatch();
+  const dispatch: AppDispatch = useDispatch();
   const taskForm = useSelector((state: RootState) => state.todo.taskForm);
 
   return (
@@ -24,8 +24,7 @@ const TaskForm = () => {
           id="button-addon1"
           onClick={() => {
             if (taskForm.trim()) {
-                dispatch(addTaskInput(taskForm));
-                console.log(taskForm);
+              dispatch(addTask(taskForm));
             }
           }}
         >
